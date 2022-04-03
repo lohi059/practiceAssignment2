@@ -142,8 +142,8 @@ class directory
 {
     int gd, siz;
     vector<bucket *> b;
-    set<int> bno;
-    int hash(int);
+    vector<int> bno;
+    int hash(int, int);
     int split(int);
     int pairIndex(int, int);
 
@@ -161,14 +161,14 @@ directory::directory(int gd, int siz)
     this->siz = siz;
     for (int i = 0; i < (1 << gd); i++)
     {
-        bno.insert(i);
+        bno.push_back(i);
         b.push_back(new bucket(gd, siz));
     }
 }
 
-int directory::hash(int n)
+int directory::hash(int n, int depth)
 {
-    return (n & ((1 << gd) - 1));
+    return (n & ((1 << depth) - 1));
 }
 
 int directory::pairIndex(int bucket_no, int depth)
@@ -194,7 +194,7 @@ int directory::split(int n)
         return (0);
     }
     pi = pairIndex(n, ld);
-    bno.insert(pi);
+    bno.push_back(pi);
     b[pi] = new bucket(ld, siz);
     temp = b[n]->copy();
     b[n]->clr();
@@ -217,7 +217,21 @@ int directory::split(int n)
 
 int directory::insert(int n)
 {
-    int no = hash(n);
+    int no;
+    int depth = gd;
+    while (depth >= 0)
+    {
+        no = hash(n, depth);
+        auto j = find(bno.begin(), bno.end(), no);
+        if (j != bno.end())
+        {
+            break;
+        }
+        else
+        {
+            depth--;
+        }
+    }
     int con = b[no]->insert(n);
     if (con == 0)
     {
@@ -273,6 +287,7 @@ int main()
     directory b(gd, size);
     int mode;
     int j;
+
     while (true)
     {
         cin >> mode;
